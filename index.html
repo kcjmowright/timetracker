@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TimeTracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <h1>⏱️ TimeTracker</h1>
+      <div class="header-actions">
+        <button id="settingsBtn" class="icon-btn" title="Settings">⚙️</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-section">
+          <button id="newTaskBtn" class="btn btn-primary">+ New Task</button>
+        </div>
+
+        <div class="sidebar-section">
+          <h3>Active Tasks</h3>
+          <div id="activeTasksList" class="task-list"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3>Recent Tasks</h3>
+          <div id="recentTasksList" class="task-list"></div>
+        </div>
+      </aside>
+
+      <!-- Task Details Panel -->
+      <main class="task-panel">
+        <div id="currentTaskView" class="current-task-view">
+          <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <p>Select a task or create a new one to get started</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- New Task Modal -->
+  <div id="taskModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalTitle">New Task</h2>
+        <button class="close-btn" onclick="closeTaskModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="taskTitle">Task Title *</label>
+          <input type="text" id="taskTitle" placeholder="Enter task title" required>
+        </div>
+
+        <div class="form-group">
+          <label for="taskDescription">Description</label>
+          <textarea id="taskDescription" rows="3" placeholder="Task description"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="jiraTicket">Jira Ticket</label>
+            <input type="text" id="jiraTicket" placeholder="e.g., PROJ-123">
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="isRecurring">
+              Recurring Task
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="taskTags">Tags (comma separated)</label>
+          <input type="text" id="taskTags" placeholder="e.g., development, frontend">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeTaskModal()">Cancel</button>
+        <button class="btn btn-primary" id="saveTaskBtn">Save Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button class="close-btn" onclick="closeSettingsModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="jiraUrl">Jira Cloud URL</label>
+          <input type="url" id="jiraUrl" placeholder="https://yourcompany.atlassian.net">
+        </div>
+
+        <div class="form-group">
+          <label for="jiraEmail">Jira Email</label>
+          <input type="email" id="jiraEmail" placeholder="your.email@company.com">
+        </div>
+
+        <div class="form-group">
+          <label for="jiraToken">Jira API Token</label>
+          <input type="password" id="jiraToken" placeholder="Your API token">
+          <small>Generate at: <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank">Atlassian API Tokens</a></small>
+        </div>
+
+        <div class="form-group">
+          <button class="btn btn-secondary" id="testJiraBtn">Test Connection</button>
+          <span id="jiraStatus"></span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeSettingsModal()">Cancel</button>
+        <button class="btn btn-primary" id="saveSettingsBtn">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>
