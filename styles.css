@@ -362,10 +362,17 @@ body {
 .comment-form {
   display: flex;
   gap: 0.75rem;
+  align-items: flex-start;
 }
 
 .comment-form textarea {
   flex: 1;
+  min-height: 60px;
+}
+
+.comment-form .btn {
+  white-space: nowrap;
+  align-self: flex-end;
 }
 
 /* Buttons */

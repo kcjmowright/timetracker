@@ -38,7 +38,6 @@ function createWindow() {
 }
 
 function createTray() {
-  // Create a simple tray icon (you can replace with actual icon)
   tray = new Tray(path.join(__dirname, 'assets/tray-icon.png'));
   
   const contextMenu = Menu.buildFromTemplate([

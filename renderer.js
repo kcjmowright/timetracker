@@ -47,7 +47,11 @@ async function loadTasks() {
     currentTask = activeTask;
     currentSessionStart = new Date(activeTask.currentSessionStart);
     startTimer();
-  }
+    tasks.filter(t => t.id !== activeTask.id).forEach(t => {
+      if (t.status === 'IN_PROGRESS') {
+        t.status = 'PAUSED';
+      }
+    });
 }
 
 async function saveTasks() {
@@ -103,7 +107,8 @@ async function saveTask() {
 
   if (currentTask) {
     const index = tasks.findIndex(t => t.id === currentTask.id);
-    tasks[index] = taskData;
+    // tasks[index] = taskData;
+    Object.assign(tasks[index], { ...taskData }); // Update existing task while preserving references
   } else {
     tasks.push(taskData);
   }
@@ -265,9 +270,24 @@ function updateTimerDisplay() {
 // Comments Management
 async function addComment() {
   const textarea = document.getElementById('commentInput');
+  
+  if (!textarea) {
+    console.error('Comment textarea not found');
+    showNotification('Error: Comment field not found', 'error');
+    return;
+  }
+  
   const text = textarea.value.trim();
   
-  if (!text || !currentTask) return;
+  if (!text) {
+    showNotification('Please enter a comment', 'error');
+    return;
+  }
+  
+  if (!currentTask) {
+    showNotification('No task selected', 'error');
+    return;
+  }
   
   const comment = {
     id: generateId(),
@@ -275,25 +295,48 @@ async function addComment() {
     createdAt: new Date().toISOString()
   };
   
-  if (!currentTask.comments) currentTask.comments = [];
-  currentTask.comments.push(comment);
-  
+  // Find the task in the tasks array
   const task = tasks.find(t => t.id === currentTask.id);
-  task.comments = currentTask.comments;
+  if (!task) {
+    showNotification('Task not found', 'error');
+    return;
+  }
+  
+  // Add comment to the task
+  if (!task.comments) task.comments = [];
+  task.comments.push(comment);
+  
+  // Update currentTask reference
+  currentTask = task;
   
   await saveTasks();
-  textarea.value = '';
   renderTaskDetail();
   showNotification('Comment added', 'success');
 }
 
 async function deleteComment(commentId) {
-  if (!currentTask) return;
+  if (!currentTask) {
+    showNotification('No task selected', 'error');
+    return;
+  }
   
-  currentTask.comments = currentTask.comments.filter(c => c.id !== commentId);
+  if (!confirm('Delete this comment?')) {
+    return;
+  }
   
+  // Find the task in the tasks array
   const task = tasks.find(t => t.id === currentTask.id);
-  task.comments = currentTask.comments;
+  if (!task) {
+    showNotification('Task not found', 'error');
+    return;
+  }
+  
+  // Remove comment from the task
+  if (!task.comments) task.comments = [];
+  task.comments = task.comments.filter(c => c.id !== commentId);
+  
+  // Update currentTask reference
+  currentTask = task;
   
   await saveTasks();
   renderTaskDetail();
