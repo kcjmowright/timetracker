@@ -22,6 +22,11 @@ function initializeEventListeners() {
     openTaskModal();
   });
 
+  // Reports Button
+  document.getElementById('reportBtn').addEventListener('click', () => {
+    openReport();
+  });
+
   // Settings Button
   document.getElementById('settingsBtn').addEventListener('click', () => {
     openSettingsModal();
@@ -52,6 +57,7 @@ async function loadTasks() {
         t.status = 'PAUSED';
       }
     });
+  }
 }
 
 async function saveTasks() {
@@ -106,8 +112,7 @@ async function saveTask() {
   };
 
   if (currentTask) {
-    const index = tasks.findIndex(t => t.id === currentTask.id);
-    // tasks[index] = taskData;
+    const index = tasks.findIndex(t => t.id === currentTask.id);   
     Object.assign(tasks[index], { ...taskData }); // Update existing task while preserving references
   } else {
     tasks.push(taskData);
@@ -480,13 +485,6 @@ function renderTaskDetail() {
           <div class="task-detail-meta">
             <div class="status-transition">
               <span class="status-badge ${task.status.toLowerCase().replace('_', '-')}">${task.status.replace('_', ' ')}</span>
-              <select class="status-select" onchange="handleStatusChange('${task.id}', this.value); this.value='';">
-                <option value="">Change status...</option>
-                <option value="TODO" ${task.status === 'TODO' ? 'disabled' : ''}>→ TODO</option>
-                <option value="IN_PROGRESS" ${task.status === 'IN_PROGRESS' ? 'disabled' : ''}>→ IN PROGRESS</option>
-                <option value="PAUSED" ${task.status === 'PAUSED' ? 'disabled' : ''}>→ PAUSED</option>
-                <option value="DONE" ${task.status === 'DONE' ? 'disabled' : ''}>→ DONE</option>
-              </select>
             </div>
             ${task.jiraTicket ? `<span>🎫 ${escapeHtml(task.jiraTicket)}</span>` : ''}
             ${task.isRecurring ? '<span>🔄 Recurring</span>' : ''}
@@ -609,6 +607,11 @@ function openSettingsModal() {
 
 function closeSettingsModal() {
   document.getElementById('settingsModal').classList.remove('active');
+}
+
+// Report Window
+function openReport() {
+  ipcRenderer.invoke('open-report');
 }
 
 // Utility Functions

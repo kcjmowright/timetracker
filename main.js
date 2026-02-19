@@ -4,6 +4,7 @@ const Store = require('electron-store');
 
 const store = new Store();
 let mainWindow = null;
+let reportWindow = null;
 let tray = null;
 
 function createWindow() {
@@ -112,4 +113,39 @@ ipcMain.handle('store-set', (event, key, value) => {
 ipcMain.handle('store-delete', (event, key) => {
   store.delete(key);
   return true;
+});
+
+// Open report window
+ipcMain.handle('open-report', () => {
+  if (reportWindow && !reportWindow.isDestroyed()) {
+    reportWindow.focus();
+    return;
+  }
+
+  reportWindow = new BrowserWindow({
+    width: 1000,
+    height: 800,
+    minWidth: 700,
+    minHeight: 500,
+    title: 'TimeTracker — Report',
+    parent: mainWindow,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    },
+    icon: path.join(__dirname, 'assets/icon.png')
+  });
+
+  reportWindow.loadFile('report.html');
+
+  reportWindow.once('ready-to-show', () => {
+    reportWindow.show();
+  });
+
+  reportWindow.on('closed', () => {
+    reportWindow = null;
+  });
+
+  // Remove default menu bar so only print shortcut works
+  reportWindow.setMenuBarVisibility(false);
 });

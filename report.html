@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TimeTracker — Report</title>
+  <style>
+    /* ── Reset & Variables ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary:       #4f46e5;
+      --primary-dark:  #4338ca;
+      --success:       #10b981;
+      --warning:       #f59e0b;
+      --danger:        #ef4444;
+      --bg:            #f9fafb;
+      --surface:       #ffffff;
+      --border:        #e5e7eb;
+      --text:          #111827;
+      --muted:         #6b7280;
+      --radius:        0.5rem;
+      --shadow:        0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md:     0 4px 6px -1px rgba(0,0,0,.1);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Screen-only controls ─────────────────────────────── */
+    @media screen {
+      .screen-only { display: block; }
+      .print-only  { display: none;  }
+
+      .controls-bar {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: flex-end;
+        gap: 1.25rem;
+        flex-wrap: wrap;
+        box-shadow: var(--shadow);
+      }
+
+      .controls-bar h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-right: auto;
+        align-self: center;
+        white-space: nowrap;
+      }
+
+      .report-container {
+        max-width: 1100px;
+        margin: 1.5rem auto 3rem;
+        padding: 0 1.5rem;
+      }
+    }
+
+    /* ── Print ────────────────────────────────────────────── */
+    @media print {
+      .screen-only { display: none !important; }
+      .print-only  { display: block; }
+
+      body { background: #fff; font-size: 11pt; }
+
+      .report-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .report-header {
+        margin-bottom: 1.2rem;
+      }
+
+      .task-card {
+        break-inside: avoid;
+        border: 1px solid #ccc !important;
+        box-shadow: none !important;
+        margin-bottom: 1rem !important;
+      }
+
+      .task-card-header {
+        background: #f3f4f6 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .session-row:nth-child(even) {
+        background: #f9f9f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .summary-bar {
+        border: 1px solid #ccc !important;
+        background: #f3f4f6 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+
+    /* ── Form Controls ───────────────────────────────────── */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+    }
+
+    .field label {
+      font-size: .75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--muted);
+    }
+
+    .field input[type="date"] {
+      padding: .45rem .65rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: .875rem;
+      font-family: inherit;
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .field input[type="date"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79,70,229,.15);
+    }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .5rem 1rem;
+      border: none;
+      border-radius: var(--radius);
+      font-size: .875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s, box-shadow .15s;
+      white-space: nowrap;
+    }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    .btn-print { background: #1f2937; color: #fff; }
+    .btn-print:hover { background: #111827; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+
+    /* ── Empty / Loading States ──────────────────────────── */
+    .state-box {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--muted);
+    }
+    .state-box .icon { font-size: 3rem; margin-bottom: .75rem; }
+    .state-box p { font-size: .95rem; }
+
+    /* ── Summary Bar ─────────────────────────────────────── */
+    .summary-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow);
+    }
+
+    .summary-stat { display: flex; flex-direction: column; gap: .2rem; }
+    .summary-stat .val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      font-variant-numeric: tabular-nums;
+    }
+    .summary-stat .lbl { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+
+    /* ── Report Header (print title) ─────────────────────── */
+    .report-header {
+      margin-bottom: 1.25rem;
+    }
+    .report-header h2 { font-size: 1.2rem; }
+    .report-header p  { font-size: .85rem; color: var(--muted); margin-top: .2rem; }
+
+    /* ── Task Card ───────────────────────────────────────── */
+    .task-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .task-card-header {
+      background: #f3f4f6;
+      padding: .75rem 1.25rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: .5rem 1.5rem;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .task-title-row { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+
+    .task-name {
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: .15rem .55rem;
+      border-radius: 999px;
+      font-size: .7rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+    }
+    .badge-todo        { background: #e5e7eb; color: #374151; }
+    .badge-in-progress { background: #dbeafe; color: #1e40af; }
+    .badge-paused      { background: #fef3c7; color: #92400e; }
+    .badge-done        { background: #d1fae5; color: #065f46; }
+    .badge-jira        { background: #ede9fe; color: #5b21b6; font-family: monospace; }
+    .badge-recurring   { background: #fce7f3; color: #9d174d; }
+
+    .task-total-time {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .task-meta-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      font-size: .78rem;
+      color: var(--muted);
+      padding-top: .15rem;
+    }
+
+    /* ── Sessions Table ──────────────────────────────────── */
+    .sessions-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+    }
+
+    .sessions-table thead tr {
+      background: #f9fafb;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sessions-table th {
+      padding: .5rem 1.25rem;
+      text-align: left;
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+    }
+
+    .sessions-table th.num,
+    .sessions-table td.num { text-align: right; }
+
+    .session-row td {
+      padding: .55rem 1.25rem;
+      border-bottom: 1px solid #f3f4f6;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .session-row:last-child td { border-bottom: none; }
+
+    .session-row:nth-child(even) { background: #fafafa; }
+
+    .duration-pill {
+      display: inline-flex;
+      align-items: center;
+      background: #ede9fe;
+      color: #5b21b6;
+      border-radius: 999px;
+      padding: .1rem .55rem;
+      font-size: .75rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Comments Section ────────────────────────────────── */
+    .comments-section {
+      padding: .75rem 1.25rem 1rem;
+      border-top: 1px dashed var(--border);
+      background: #fafafa;
+    }
+
+    .comments-section-title {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-bottom: .5rem;
+    }
+
+    .comment-entry {
+      display: flex;
+      gap: .75rem;
+      margin-bottom: .4rem;
+      font-size: .82rem;
+    }
+
+    .comment-ts {
+      white-space: nowrap;
+      color: var(--muted);
+      flex-shrink: 0;
+      padding-top: .05rem;
+    }
+
+    .comment-body { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Screen Controls ─────────────────────────────────── -->
+  <div class="controls-bar screen-only">
+    <h1>📊 Time Report</h1>
+
+    <div class="field">
+      <label for="startDate">From</label>
+      <input type="date" id="startDate">
+    </div>
+
+    <div class="field">
+      <label for="endDate">To</label>
+      <input type="date" id="endDate">
+    </div>
+
+    <button class="btn btn-primary" id="generateBtn">Generate Report</button>
+    <button class="btn btn-ghost"   id="clearBtn">Clear</button>
+    <button class="btn btn-print"   id="printBtn" style="margin-left:auto">🖨 Print</button>
+  </div>
+
+  <!-- ── Report Output ───────────────────────────────────── -->
+  <div class="report-container">
+
+    <!-- Print-only header (replaces controls bar in print) -->
+    <div class="print-only report-header">
+      <h2>⏱️ TimeTracker — Time Report</h2>
+      <p id="printSubtitle"></p>
+    </div>
+
+    <!-- Dynamic content -->
+    <div id="reportOutput">
+      <div class="state-box">
+        <div class="icon">📅</div>
+        <p>Select a date range above and click <strong>Generate Report</strong> to get started.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="report.js"></script>
+</body>
+</html>
