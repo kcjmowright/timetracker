@@ -360,13 +360,13 @@ body {
 }
 
 .comment-form {
-  display: flex;
   gap: 0.75rem;
   align-items: flex-start;
 }
 
 .comment-form textarea {
-  flex: 1;
+
+  width: 100%;
   min-height: 60px;
 }
 

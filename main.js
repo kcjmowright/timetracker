@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, Tray, Menu, ipcMain } = require('electron');
+const { app, BrowserWindow, globalShortcut, Tray, Menu, ipcMain, net } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
 
@@ -132,7 +132,7 @@ ipcMain.handle('open-report', () => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
-    },
+    },   
     icon: path.join(__dirname, 'assets/icon.png')
   });
 
@@ -148,4 +148,34 @@ ipcMain.handle('open-report', () => {
 
   // Remove default menu bar so only print shortcut works
   reportWindow.setMenuBarVisibility(false);
+});
+
+ipcMain.handle('logTime', async (event, { domain, credentials, issueKey, timeSpent, started }) => {
+  return new Promise((resolve, reject) => {
+    const request = net.request({
+
+      method: 'POST',
+      url: `${domain}/rest/api/3/issue/${issueKey}/worklog`,
+    });
+    request.setHeader('authority', 'firemon.atlassian.net')
+    request.setHeader('Authorization', `Basic ${credentials}`);
+    request.setHeader('Content-Type', 'application/json');
+    request.setHeader('Accept', '*/*');
+    request.setHeader('X-Atlassian-Token', 'no-check');
+
+    let body = '';
+    request.on('response', (response) => {
+      response.on('data', (chunk) => { body += chunk; });
+      response.on('end', () => {
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          resolve(JSON.parse(body));
+        } else {
+          reject(new Error(`Jira API error: ${response.statusCode} - ${body}`));
+        }
+      });
+    });
+    request.on('error', reject);
+    request.write(JSON.stringify({ timeSpent, started }));
+    request.end();
+  });
 });

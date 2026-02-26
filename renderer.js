@@ -404,9 +404,11 @@ async function syncWithJira(task) {
     
     // Update task with Jira data
     task.title = issue.fields.summary;
-    task.description = issue.fields.description || task.description;
+    task.description = (issue.fields.description.content || [])
+      .map(c => (c.content || []).map(nc => nc.text || '').join('\n')).join('\n\n') || task.description;
     task.updatedAt = new Date().toISOString();
     
+    await syncJiraWorkLog(task);
     await saveTasks();
     renderTasks();
     if (currentTask && currentTask.id === task.id) {
@@ -415,7 +417,8 @@ async function syncWithJira(task) {
     
     showNotification('Synced with Jira successfully', 'success');
   } catch (error) {
-    showNotification('Failed to sync with Jira: ' + error.message, 'error');
+    console.log('Jira sync error:', error);
+    showNotification(`Failed to sync with Jira: ${error.message}`, 'error');
   }
 }
 
@@ -424,6 +427,97 @@ async function syncWithJiraById(taskId) {
   if (task) {
     await syncWithJira(task);
   }
+}
+
+async function syncJiraWorkLog(task) {
+  const authToken = btoa(`${settings.jiraEmail}:${settings.jiraToken}`);
+  const response = await fetch(`${settings.jiraUrl}/rest/api/3/issue/${task.jiraTicket}/worklog`, {
+    method: "GET",
+    headers: {
+      'Authorization': `Basic ${authToken}`,
+      'Content-Type': 'application/json'
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Jira API error: ${response.status} - ${JSON.stringify(error)}`);
+  }
+
+  const data = await response.json();
+
+  const taskMap = new Map((task.timeSessions || []).map(item => [item.start, item]));
+  const logMap = new Map(data.worklogs.map(log => [new Date(log.started), log]));
+
+  (task.timeSessions || []).filter(session => !logMap.has(new Date(session.start))).forEach(async (session) => {
+    const sessionStart = new Date(session.start).toISOString().replace('Z', '+0000');
+    const duration = secondsToJiraDuration(session.duration);
+    // const sessionEnd = new Date(session.end);
+
+    try {
+      await ipcRenderer.invoke('logTime', {
+        domain: settings.jiraUrl, 
+        credentials: authToken, 
+        issueKey: task.jiraTicket, 
+        timeSpent: duration, 
+        started: sessionStart
+      });
+    
+      // const timeLoggedResponse = await fetch(`${settings.jiraUrl}/rest/api/3/issue/${task.jiraTicket}/worklog`, {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Basic ${authToken}`,
+      //     'Content-Type': 'application/json',
+      //     'X-Atlassian-Token': 'no-check'
+      //   },
+      //   credentials: 'omit',
+      //   body: JSON.stringify({
+      //     timeSpent: secondsToJiraDuration(session.duration),
+      //     started: sessionStart.toISOString().replace('Z', '+0000'),
+      //   }),
+      // });
+
+      // if (!timeLoggedResponse.ok) {
+      //   const error = await timeLoggedResponse.text();
+      //   throw new Error(`API error: ${timeLoggedResponse.status} - ${error}`);
+      // }
+    } catch (error) {
+      //console.log('Error syncing Jira worklog:', error);
+      showNotification(`Failed to sync worklog with Jira: ${error.message}`, 'error');
+      return;
+    }
+  });
+
+  data.worklogs.filter(log => !taskMap.has(new Date(log.started))).forEach(log => {
+    const sessionStart = new Date(log.started);
+    const sessionEnd = new Date(sessionStart.getTime() + log.timeSpentSeconds * 1000);
+    task.timeSessions.push({
+      start: log.started,
+      end: sessionEnd.toISOString(),
+      duration: log.timeSpentSeconds
+    });    
+  });
+}
+
+function secondsToJiraDuration(totalSeconds, hoursPerDay = 8, daysPerWeek = 5) {
+  const secondsPerMinute = 60;
+  const secondsPerHour = 3600;
+  const secondsPerDay = secondsPerHour * hoursPerDay;
+  const secondsPerWeek = secondsPerDay * daysPerWeek;
+
+  const weeks = Math.floor(totalSeconds / secondsPerWeek);
+  const days = Math.floor((totalSeconds % secondsPerWeek) / secondsPerDay);
+  const hours = Math.floor((totalSeconds % secondsPerDay) / secondsPerHour);
+  const minutes = Math.floor((totalSeconds % secondsPerHour) / secondsPerMinute);
+
+  return [
+    weeks   && `${weeks}w`,
+    days    && `${days}d`,
+    hours   && `${hours}h`,
+    minutes && `${minutes}m`,
+  ]
+    .filter(Boolean)
+    .join(" ") || "0m";
 }
 
 // Rendering Functions
