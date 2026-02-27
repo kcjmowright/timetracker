@@ -14,7 +14,7 @@ A feature-rich time tracking application built with Electron that runs on macOS,
 
 ### Jira Integration
 - 🎫 **Jira Cloud Support**: Link tasks to Jira tickets
-- 🔄 **Sync with Jira**: Pull ticket details (title, description) from Jira
+- 🔄 **Sync with Jira**: Pull ticket details (title, description) from Jira and sync time logs
 - 🔐 **Secure Authentication**: Uses Jira API tokens for secure access
 
 ### User Experience
@@ -148,6 +148,14 @@ Data includes:
 - All tasks and their time sessions
 - Comments
 - Jira settings (API token is stored securely)
+
+### Data Export
+
+Use the "Export Data" 📁 button in the upper right of the header to export data as JSON to your desktop.
+
+### Reports
+
+Use the "Reports" 📊 button in the upper right to launch the reports window.  Set the desired date range and click the "Generate Report" button to generate a report.  Click the "Print" button to print the report.
 
 ## Architecture
 
@@ -286,7 +294,6 @@ The codebase is well-structured:
 
 Potential features to add:
 - [ ] Export time logs to CSV/Excel
-- [ ] Generate time reports with charts
 - [ ] Multiple timer support (parallel tasks)
 - [ ] Pomodoro timer integration
 - [ ] Team collaboration features
@@ -294,7 +301,6 @@ Potential features to add:
 - [ ] Custom task fields
 - [ ] Dark/light theme toggle
 - [ ] Backup/restore functionality
-- [ ] Automatic Jira time logging
 
 ## License
 

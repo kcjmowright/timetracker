@@ -25,6 +25,14 @@ function initializeEventListeners() {
     openTaskModal();
   });
 
+  document.getElementById('exportBtn').addEventListener('click', () => {
+      ipcRenderer.invoke('export-data').then((path) => {
+        showNotification(`Data exported successfully to ${path}`, 'success');
+      }).catch(error => {
+        showNotification(`Failed to export data: ${error.message}`, 'error');
+      });
+  });
+
   // Reports Button
   document.getElementById('reportBtn').addEventListener('click', () => {
     openReport();

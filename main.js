@@ -179,3 +179,17 @@ ipcMain.handle('logTime', async (event, { domain, credentials, issueKey, timeSpe
     request.end();
   });
 });
+
+ipcMain.handle('export-data', () => {
+  return new Promise((resolve, reject) => {
+    const data = store.store;
+    const exportPath = path.join(app.getPath('desktop'), `timetracker-export-${Date.now()}.json`);
+    require('fs').writeFile(exportPath, JSON.stringify(data, null, 2), (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(exportPath);
+      }
+    });
+  });
+});
