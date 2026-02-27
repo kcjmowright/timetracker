@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initializeEventListeners() {
   // New Task Button
   document.getElementById('newTaskBtn').addEventListener('click', () => {
+    if (currentTask && currentTask.status === 'IN_PROGRESS') {
+      handleStatusChange(currentTask.id, 'PAUSED');
+    }
     openTaskModal();
   });
 
@@ -452,7 +455,6 @@ async function syncJiraWorkLog(task) {
   (task.timeSessions || []).filter(session => !logMap.has(new Date(session.start))).forEach(async (session) => {
     const sessionStart = new Date(session.start).toISOString().replace('Z', '+0000');
     const duration = secondsToJiraDuration(session.duration);
-    // const sessionEnd = new Date(session.end);
 
     try {
       await ipcRenderer.invoke('logTime', {
@@ -462,29 +464,8 @@ async function syncJiraWorkLog(task) {
         timeSpent: duration, 
         started: sessionStart
       });
-    
-      // const timeLoggedResponse = await fetch(`${settings.jiraUrl}/rest/api/3/issue/${task.jiraTicket}/worklog`, {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Basic ${authToken}`,
-      //     'Content-Type': 'application/json',
-      //     'X-Atlassian-Token': 'no-check'
-      //   },
-      //   credentials: 'omit',
-      //   body: JSON.stringify({
-      //     timeSpent: secondsToJiraDuration(session.duration),
-      //     started: sessionStart.toISOString().replace('Z', '+0000'),
-      //   }),
-      // });
-
-      // if (!timeLoggedResponse.ok) {
-      //   const error = await timeLoggedResponse.text();
-      //   throw new Error(`API error: ${timeLoggedResponse.status} - ${error}`);
-      // }
     } catch (error) {
-      //console.log('Error syncing Jira worklog:', error);
       showNotification(`Failed to sync worklog with Jira: ${error.message}`, 'error');
-      return;
     }
   });
 
