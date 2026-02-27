@@ -11,6 +11,7 @@ A feature-rich time tracking application built with Electron that runs on macOS,
 - 💬 **Comments**: Add unlimited comments to any task for notes and updates
 - 🏷️ **Tags**: Organize tasks with custom tags
 - 🔁 **Recurring Tasks**: Mark tasks as recurring for easy re-selection
+- Edit time
 
 ### Jira Integration
 - 🎫 **Jira Cloud Support**: Link tasks to Jira tickets
