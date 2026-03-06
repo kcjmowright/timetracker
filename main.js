@@ -153,11 +153,11 @@ ipcMain.handle('open-report', () => {
 ipcMain.handle('logTime', async (event, { domain, credentials, issueKey, timeSpent, started }) => {
   return new Promise((resolve, reject) => {
     const request = net.request({
-
+      useSessionCookies: false,
       method: 'POST',
       url: `${domain}/rest/api/3/issue/${issueKey}/worklog`,
     });
-    request.setHeader('authority', 'firemon.atlassian.net')
+    //request.setHeader('Authority', 'firemon.atlassian.net')
     request.setHeader('Authorization', `Basic ${credentials}`);
     request.setHeader('Content-Type', 'application/json');
     request.setHeader('Accept', '*/*');
