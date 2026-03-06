@@ -152,16 +152,19 @@ ipcMain.handle('open-report', () => {
 
 ipcMain.handle('logTime', async (event, { domain, credentials, issueKey, timeSpent, started }) => {
   return new Promise((resolve, reject) => {
+    const baseUrl = domain.endsWith('/') ? domain.slice(0, -1) : domain;
     const request = net.request({
       useSessionCookies: false,
       method: 'POST',
-      url: `${domain}/rest/api/3/issue/${issueKey}/worklog`,
+      url: `${baseUrl}/rest/api/3/issue/${issueKey}/worklog`,
     });
     //request.setHeader('Authority', 'firemon.atlassian.net')
     request.setHeader('Authorization', `Basic ${credentials}`);
     request.setHeader('Content-Type', 'application/json');
     request.setHeader('Accept', '*/*');
-    request.setHeader('X-Atlassian-Token', 'no-check');
+    request.setHeader('x-atlassian-token', 'no-check');
+    request.setHeader('Origin', baseUrl);
+    request.setHeader('Referer', baseUrl);
 
     let body = '';
     request.on('response', (response) => {
