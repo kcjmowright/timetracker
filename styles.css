@@ -5,21 +5,52 @@
 }
 
 :root {
+  /* Dark theme defaults */
+  /* Dark theme defaults */
   --primary-color: #4f46e5;
   --primary-hover: #4338ca;
   --secondary-color: #6b7280;
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --danger-color: #ef4444;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-tertiary: #f3f4f6;
-  --border-color: #e5e7eb;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
+  --bg-primary: #1f2937;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1e293b;
+  --border-color: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+  --primary-hover: #0cc;          /* darker cyan */
+  --secondary-color: #f0f;        /* neon magenta */
+  --success-color: #0f0;          /* neon green */
+  --warning-color: #ff0;          /* neon yellow */
+  --danger-color: #f00;           /* neon red */
+  --bg-primary: #0a0a0a;         /* dark background */
+  --bg-secondary: #111;          /* slightly lighter */
+  --bg-tertiary: #222;           /* even lighter */
+  --border-color: #444;           /* subtle border */
+  --text-primary: #eee;           /* light text */
+  --text-secondary: #aaa;         /* secondary text */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+/* Light mode overrides for users who prefer a brighter look */
+@media (prefers-color-scheme: light) {
+  :root {
+    --primary-color: #0ff;
+    --primary-hover: #0cc;
+    --secondary-color: #f0f;
+    --success-color: #0f0;
+    --warning-color: #ff0;
+    --danger-color: #f00;
+    --bg-primary: #f5f5f5;
+    --bg-secondary: #e0e0e0;
+    --bg-tertiary: #d0d0d0;
+    --border-color: #b0b0b0;
+    --text-primary: #222;
+    --text-secondary: #555;
+  }
 }
 
 body {
@@ -27,6 +58,20 @@ body {
   background: var(--bg-secondary);
   color: var(--text-primary);
   overflow: hidden;
+  font-size: 1rem; /* 16px base */
+  line-height: 1.5;
+}
+
+/* Accessible focus styles */
+:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.task-item:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 .app-container {
