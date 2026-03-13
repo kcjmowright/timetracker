@@ -150,39 +150,6 @@ ipcMain.handle('open-report', () => {
   reportWindow.setMenuBarVisibility(false);
 });
 
-ipcMain.handle('logTime', async (event, { domain, credentials, issueKey, timeSpent, started }) => {
-  return new Promise((resolve, reject) => {
-    const baseUrl = domain.endsWith('/') ? domain.slice(0, -1) : domain;
-    const request = net.request({
-      useSessionCookies: false,
-      method: 'POST',
-      url: `${baseUrl}/rest/api/3/issue/${issueKey}/worklog`,
-    });
-    //request.setHeader('Authority', 'firemon.atlassian.net')
-    request.setHeader('Authorization', `Basic ${credentials}`);
-    request.setHeader('Content-Type', 'application/json');
-    request.setHeader('Accept', '*/*');
-    request.setHeader('x-atlassian-token', 'no-check');
-    request.setHeader('Origin', baseUrl);
-    request.setHeader('Referer', baseUrl);
-
-    let body = '';
-    request.on('response', (response) => {
-      response.on('data', (chunk) => { body += chunk; });
-      response.on('end', () => {
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          resolve(JSON.parse(body));
-        } else {
-          reject(new Error(`Jira API error: ${response.statusCode} - ${body}`));
-        }
-      });
-    });
-    request.on('error', reject);
-    request.write(JSON.stringify({ timeSpent, started }));
-    request.end();
-  });
-});
-
 ipcMain.handle('export-data', () => {
   return new Promise((resolve, reject) => {
     const data = store.store;
