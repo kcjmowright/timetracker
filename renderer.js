@@ -359,6 +359,41 @@ async function deleteComment(commentId) {
   showNotification('Comment deleted', 'success');
 }
 
+async function deleteTimeSession(sessionStart) {
+  if (!currentTask) {
+    showNotification('No task selected', 'error');
+    return;
+  }
+  
+  if (!confirm('Delete this time session?')) {
+    return;
+  }
+  
+  // Find the task in the tasks array
+  const task = tasks.find(t => t.id === currentTask.id);
+  if (!task) {
+    showNotification('Task not found', 'error');
+    return;
+  }
+  
+  // Remove time session from the task
+  if (!task.timeSessions) task.timeSessions = [];
+  const session = task.timeSessions.find(s => s.start === sessionStart);
+  if (session) {
+    task.totalTime = (task.totalTime || 0) - session.duration;
+    task.timeSessions = task.timeSessions.filter(s => s.start !== sessionStart);
+    
+    // Update currentTask reference
+    currentTask = task;
+    
+    await saveTasks();
+    renderTaskDetail();
+    showNotification('Time session deleted', 'success');
+  } else {
+    showNotification('Time session not found', 'error');
+  }
+}
+
 // Jira Integration
 async function testJiraConnection() {
   const statusEl = document.getElementById('jiraStatus');
@@ -457,10 +492,10 @@ async function syncJiraWorkLog(task) {
 
   const data = await response.json();
 
-  const taskMap = new Map((task.timeSessions || []).map(item => [item.start, item]));
-  const logMap = new Map(data.worklogs.map(log => [new Date(log.started), log]));
+  const taskMap = new Map((task.timeSessions || []).map(item => [new Date(item.start).getTime(), item]));
+  const logMap = new Map(data.worklogs.map(log => [new Date(log.started).getTime(), log]));
 
-  (task.timeSessions || []).filter(session => !logMap.has(new Date(session.start))).forEach(async (session) => {
+  (task.timeSessions || []).filter(session => !logMap.has(new Date(session.start).getTime())).forEach(async (session) => {
     const sessionStart = new Date(session.start).toISOString().replace('Z', '+0000');
     const duration = secondsToJiraDuration(session.duration);
 
@@ -620,6 +655,7 @@ function renderTaskDetail() {
                 <div class="time-session-header">
                   <span>${formatDate(session.start)}</span>
                   <span class="time-session-duration">${formatTime(session.duration)}</span>
+                  <button class="btn btn-sm" onclick="deleteTimeSession('${session.start}')">❌</button>
                 </div>
                 <div>${formatTime24(session.start)} - ${formatTime24(session.end)}</div>
               </div>
