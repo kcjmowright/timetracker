@@ -463,20 +463,18 @@ async function syncJiraWorkLog(task) {
   (task.timeSessions || []).filter(session => !logMap.has(new Date(session.start))).forEach(async (session) => {
     const sessionStart = new Date(session.start).toISOString().replace('Z', '+0000');
     const duration = secondsToJiraDuration(session.duration);
-    const baseUrl = settings.jiraUrl.endsWith('/') ? settings.jiraUrl.slice(0, -1) : settings.jiraUrl;
-    const response = await fetch(`${baseUrl}/rest/api/3/issue/${task.jiraTicket}/worklog`, {
-      method: "POST",
-      headers: {
-        'Authorization': `Basic ${authToken}`,
-        'Content-Type': 'application/json',
-        'Accept': '*/*',
-        'x-atlassian-token': 'no-check',
-        'Origin': baseUrl,
-        'Referer': baseUrl
-      },
-      useSessionCookies: false,
-      body: JSON.stringify({ timeSpent: duration, started: sessionStart })
-    });
+
+    try {
+      await ipcRenderer.invoke('logTime', {
+        domain: settings.jiraUrl, 
+        credentials: authToken, 
+        issueKey: task.jiraTicket, 
+        timeSpent: duration, 
+        started: sessionStart
+      });
+    } catch (error) {
+      showNotification(`Failed to sync worklog with Jira: ${error.message}`, 'error');
+    }
   });
 
   data.worklogs.filter(log => !taskMap.has(new Date(log.started))).forEach(log => {
